@@ -3,7 +3,6 @@ import torch  # pylint: disable=import-error
 import torch.nn as nn  # pylint: disable=import-error
 import torch.nn.functional as F  # pylint: disable=import-error
 from models.dale_rnn_layer import *
-from models.utils import get_gabor_conv
 
 #Dale-RNN
 class DaleRNN(nn.Module):
@@ -20,7 +19,8 @@ class DaleRNN(nn.Module):
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.inplanes)
         
-        self.rnn = DaleRNNLayer(self.inplanes, self.inplanes, 3, 5, 3),
+        self.rnn = DaleRNNLayer(self.inplanes, self.inplanes, 
+                                3, 5, 3, timesteps=15)
 
         self.conv2 = nn.Conv2d(self.inplanes, 32, kernel_size=3,
                                stride=1, padding=1, bias=False)
@@ -33,6 +33,7 @@ class DaleRNN(nn.Module):
 
     def forward(self, x):  
         x = F.relu(self.bn1(self.conv1(x)))
+        print(x.shape)
         x = self.rnn(x)
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
