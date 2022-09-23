@@ -23,16 +23,12 @@ class RNNSegm(nn.Module):
                                     3, 5, 3, timesteps=15)
         elif self.rnn_name.startswith("hgru"):
             self.rnn = hConvGRU(
-                filt_size=self.inplanes,
+                filt_size=5,  # do not change, matching DaleRNNLayer
                 hidden_dim=self.inplanes,
                 timesteps=15)
 
         elif self.rnn_name.startswith("gru"):
-            self.rnn = ConvGRU( #self.backbone['out_channels'],
-                               self.num_ori,
-                               self.backbone['out_channels'],
-                               self.backbone['fsize'],
-                               self.backbone['timesteps'])
+            self.rnn = ConvGRU(self.inplanes, self.inplanes, 5, 15)
         else:
             raise NotImplementedError("RNN name not recognized")
 
