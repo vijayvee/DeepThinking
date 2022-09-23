@@ -3,14 +3,14 @@ import torch  # pylint: disable=import-error
 import torch.nn as nn  # pylint: disable=import-error
 import torch.nn.functional as F  # pylint: disable=import-error
 from models.dale_rnn_layer import *
+from models.convgru import ConvGRU
+from models.hgru import hConvGRU
 
 #Dale-RNN
-class DaleRNN(nn.Module):
-    def __init__(self):
+class RNNSegm(nn.Module):
+    def __init__(self, rnn_name):
         super().__init__()
-
-        self.kernal_size = 5
-        self.padding = 2
+        self.rnn_name = rnn_name
         self.inplanes = 32
         self.width = 2  # hard coded, following ResidualNetworkSegment style of model
         self.inplanes = self.inplanes * self.width
@@ -18,9 +18,23 @@ class DaleRNN(nn.Module):
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.inplanes)
-        
-        self.rnn = DaleRNNLayer(self.inplanes, self.inplanes, 
-                                3, 5, 3, timesteps=15)
+        if self.rnn_name.startswith("dalernn"):
+            self.rnn = DaleRNNLayer(self.inplanes, self.inplanes, 
+                                    3, 5, 3, timesteps=15)
+        elif self.rnn_name.startswith("hgru"):
+            self.rnn = hConvGRU(
+                filt_size=self.inplanes,
+                hidden_dim=self.inplanes,
+                timesteps=15)
+
+        elif self.rnn_name.startswith("gru"):
+            self.rnn = ConvGRU( #self.backbone['out_channels'],
+                               self.num_ori,
+                               self.backbone['out_channels'],
+                               self.backbone['fsize'],
+                               self.backbone['timesteps'])
+        else:
+            raise NotImplementedError("RNN name not recognized")
 
         self.conv2 = nn.Conv2d(self.inplanes, 32, kernel_size=3,
                                stride=1, padding=1, bias=False)
@@ -41,4 +55,10 @@ class DaleRNN(nn.Module):
         return x
 
 def dalernn(num_outputs, depth, width, dataset):
-    return DaleRNN()
+    return RNNSegm("dalernn")
+
+def hgru(num_outputs, depth, width, dataset):
+    return RNNSegm("hgru")
+
+def gru(num_outputs, depth, width, dataset):
+    return RNNSegm("gru")
